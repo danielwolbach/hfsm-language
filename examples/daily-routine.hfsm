@@ -1,0 +1,12 @@
+initial state Home {
+    train -> Work
+    sleep -> Bed
+}
+
+state Work {
+    train -> Home
+}
+
+state Bed {
+    wake -> Home
+}

@@ -1,0 +1,18 @@
+initial state A {
+    initial state A {
+        initial state A {
+            event -> A.B
+        }
+    }
+
+    state B {
+        event -> A
+    }
+
+    event -> B
+}
+
+state B {
+
+}
+

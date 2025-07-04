@@ -1,0 +1,15 @@
+{
+    "projectName": "Hfsm",
+    "languages": [{
+        "id": "hfsm",
+        "grammar": "src/language/hfsm.langium",
+        "fileExtensions": [".hfsm"],
+        "textMate": {
+            "out": "syntaxes/hfsm.tmLanguage.json"
+        },
+        "monarch": {
+            "out": "src/syntaxes/hfsm.monarch.ts"
+        }
+    }],
+    "out": "src/language/generated"
+}

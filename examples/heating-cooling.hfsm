@@ -1,0 +1,22 @@
+initial state Idle {
+    tooCold -> Heating
+    tooHot -> Cooling
+}
+
+state Cooling {
+    atTemp -> Idle
+    tooCold -> Heating
+}
+
+state Heating {
+    atTemp -> Idle
+    tooHot -> Cooling
+
+    initial state Activating {
+        ready -> Heating.Active
+    }
+
+    state Active {
+
+    }
+}
