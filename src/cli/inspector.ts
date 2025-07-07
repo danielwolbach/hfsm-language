@@ -39,7 +39,6 @@ function stateToString(state: State, indent: string): string {
 
     string += `${indent}Name: ${state.name}\n`;
     string += `${indent}Initial: ${state.initial}\n`;
-    string += `${indent}Description: ${state.description}\n`;
 
     if (state.machine) {
         string += `${indent}Machine:\n`;
@@ -54,7 +53,7 @@ function transitionToString(transition: Transition, indent: string): string {
 
     string += `${indent}Event: ${transition.event}\n`;
     string += `${indent}Action: ${transition.action || "none"}\n`;
-    string += `${indent}Target: ${transition.target.ref?.name} (${transition.target.ref?.description})\n`;
+    string += `${indent}Target: ${transition.target.ref?.name}\n`;
     
     return string;
 }

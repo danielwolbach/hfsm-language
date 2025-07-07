@@ -1,0 +1,20 @@
+initial state A {
+    initial state A {
+        initial state A {
+            event -> A.B
+        }
+    }
+
+    state B {
+        event -> A
+    }
+
+    // This transition is unreachable because every child state (even when
+    // further nested) already handles the event and therefore it is never
+    // propagated to the parent state.
+    event -> B
+}
+
+state B {
+
+}
