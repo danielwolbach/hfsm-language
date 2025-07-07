@@ -1,0 +1,59 @@
+import { AstNode } from "langium";
+import { isMachine, isState, Machine, State, Transition } from "./generated/ast.js";
+
+export function recurseInitialState(machine: Machine): State {
+    // Every machine must have an initial state.
+    let initialState = machine.states.find((s) => s.initial)!;
+
+    if (initialState.machine && initialState.machine.states.length > 0) {
+        return recurseInitialState(initialState.machine);
+    } else {
+        return initialState;
+    }
+}
+
+export function findNextState(currentState: State, event: string): State | undefined {
+    let searchingMachine: AstNode | undefined = currentState.machine || currentState.$container;
+
+    // Traverse up the hierarchy to find the transition for the event.
+    while (searchingMachine) {
+        if (isMachine(searchingMachine)) {
+            for (const transition of searchingMachine.transitions || []) {
+                if (transition.event === event) {
+                    return transition.target.ref;
+                }
+            }
+        }
+
+        searchingMachine = searchingMachine.$container?.$container;
+    }
+
+    return undefined;
+}
+
+export function findAllTransitions(currentState: State): Transition[] {
+    let transitions: Transition[] = [];
+    let searchingMachine: AstNode | undefined = currentState.machine || currentState.$container;
+
+    // Traverse up the hierarchy to find all transitions.
+    while (searchingMachine) {
+        if (isMachine(searchingMachine)) {
+            transitions.push(...(searchingMachine.transitions || []));
+        }
+
+        searchingMachine = searchingMachine.$container?.$container;
+    }
+
+    return transitions;
+}
+
+export function getQualifiedName(node: AstNode, name: string): string {
+    let parent: AstNode | undefined = node.$container?.$container;
+
+    while (isState(parent)) {
+        name = `${parent.name}.${name}`;
+        parent = parent.$container?.$container;
+    }
+
+    return name;
+}

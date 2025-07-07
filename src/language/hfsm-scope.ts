@@ -1,7 +1,8 @@
-import { AstNode, AstNodeDescription, AstUtils, Cancellation, DefaultScopeComputation, DefaultScopeProvider, interruptAndCheck, LangiumDocument, ReferenceInfo, Scope } from "langium";
+import { AstNodeDescription, AstUtils, Cancellation, DefaultScopeComputation, DefaultScopeProvider, interruptAndCheck, LangiumDocument, ReferenceInfo, Scope } from "langium";
 import { HfsmServices } from "./hfsm-module.js";
 import { isState } from "./generated/ast.js";
 import { LangiumServices } from "langium/lsp";
+import { getQualifiedName } from "./utils.js";
 
 export class HfsmScopeComputation extends DefaultScopeComputation {
     constructor(services: HfsmServices) {
@@ -15,23 +16,12 @@ export class HfsmScopeComputation extends DefaultScopeComputation {
             await interruptAndCheck(cancelToken);
 
             if (isState(node)) {
-                const qualifiedName = this.getQualifiedName(node, node.name);
+                const qualifiedName = getQualifiedName(node, node.name);
                 descriptors.push(this.descriptions.createDescription(node, qualifiedName, document));
             }
         }
 
         return descriptors;
-    }
-
-    private getQualifiedName(node: AstNode, name: string): string {
-        let parent: AstNode | undefined = node.$container?.$container;
-        
-        while (isState(parent)) {
-            name = `${parent.name}.${name}`;
-            parent = parent.$container?.$container;
-        }
-        
-        return name;
     }
 }
 
@@ -43,7 +33,7 @@ export class HfsmScopeProvider extends DefaultScopeProvider {
     override getScope(context: ReferenceInfo): Scope {
         // Always resolve from the document root, ignoring local scopes.
         const document = AstUtils.getDocument(context.container);
-        const stateDescriptions = this.indexManager.allElements("State").filter(desc => desc.documentUri.toString() === document.uri.toString());
+        const stateDescriptions = this.indexManager.allElements("State").filter((desc) => desc.documentUri.toString() === document.uri.toString());
         return this.createScope(stateDescriptions);
     }
 }
