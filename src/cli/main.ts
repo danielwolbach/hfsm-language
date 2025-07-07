@@ -42,7 +42,7 @@ export const inspectAction = async (fileName: string): Promise<void> => {
     const services = createHfsmServices(NodeFileSystem).Hfsm;
     const model = await extractAstNode<Model>(fileName, services);
     const inspectionOutput = generateInspection(model);
-    console.log(chalk.blue('Inspection Output:'));
+    console.log(chalk.green('Inspection output:'));
     console.log(inspectionOutput);
 }
 
@@ -57,17 +57,20 @@ export default function(): void {
         .command('generate')
         .argument('<file>', `source file (possible file extensions: ${fileExtensions})`)
         .option('-d, --destination <dir>', 'destination directory of generating')
+        .description('Generate JavaScript code for a state machine that matches the given model')
         .action(generateAction);
 
     program
         .command('inspect')
         .argument('<file>', `source file (possible file extensions: ${fileExtensions})`)
+        .description('Inspect the generated AST for language debugging purposes')
         .action(inspectAction);
 
     program
         .command('interact')
         .argument('<file>', `source file (possible file extensions: ${fileExtensions})`)
         .option('-q, --query <events>', 'event query to run on the state machine')
+        .description('Interact with the state machine')
         .action(interactAction);
 
     program.parse(process.argv);
