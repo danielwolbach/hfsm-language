@@ -85,28 +85,21 @@ export class HfsmValidator {
     }
 
     private checkParentTransitions(machine: Machine, accept: ValidationAcceptor) {
-        // For each transition in this machine, check if all child states handle the same event
+        // Check each transition for unreachability.
         for (const transition of machine.transitions) {
-            if (machine.states.length > 0) {
-                // Check if ALL child states handle this event (either directly or through nested states)
-                const allChildrenHandleEvent = machine.states.every(state => {
-                    // If state has no machine, it doesn't handle any events
-                    if (!state.machine) {
-                        return false;
-                    }
-                    return this.stateHandlesEvent(state.machine, transition.event);
-                });
+            const allChildrenHandleEvent = machine.states.every(state => 
+                state.machine && this.stateHandlesEvent(state.machine, transition.event)
+            );
 
-                if (allChildrenHandleEvent) {
-                    accept("warning", `Transition for event '${transition.event}' will never be reached because all child states handle this event.`, {
-                        node: transition,
-                        property: "event",
-                    });
-                }
+            if (allChildrenHandleEvent && machine.states.length > 0) {
+                accept("warning", `Transition for event '${transition.event}' will never be reached because all child states handle this event.`, {
+                    node: transition,
+                    property: "event",
+                });
             }
         }
 
-        // Recursively check nested machines
+        // Recursively check nested machines.
         for (const state of machine.states) {
             if (state.machine) {
                 this.checkParentTransitions(state.machine, accept);
@@ -115,18 +108,13 @@ export class HfsmValidator {
     }
 
     private stateHandlesEvent(machine: Machine, event: string): boolean {
-        // Check if this machine directly handles the event
+        // Check if this machine directly handles the event.
         if (machine.transitions.some(transition => transition.event === event)) {
             return true;
         }
 
-        // Check if any nested state handles the event
-        for (const state of machine.states) {
-            if (state.machine && this.stateHandlesEvent(state.machine, event)) {
-                return true;
-            }
-        }
-
-        return false;
+        // Check if all nested states handle the event (only if there are nested states).
+        return machine.states.length > 0 && 
+               machine.states.every(state => state.machine && this.stateHandlesEvent(state.machine, event));
     }
 }
