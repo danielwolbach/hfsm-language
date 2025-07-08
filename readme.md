@@ -16,6 +16,9 @@ Make sure to [have Node.js installed](https://nodejs.org/en/download). Use the
 following commands to set up the project:
 
 ```sh
+# Install dependencies.
+npm install
+
 # Generate the AST.
 npm run langium:generate
 
@@ -23,7 +26,7 @@ npm run langium:generate
 npm run build
 ```
 
-### Web editor
+### Web Editor
 
 Locally serve a web editor by running the following command:
 
