@@ -54,6 +54,6 @@ function transitionToString(transition: Transition, indent: string): string {
     string += `${indent}Event: ${transition.event}\n`;
     string += `${indent}Action: ${transition.action || "none"}\n`;
     string += `${indent}Target: ${transition.target.ref?.name}\n`;
-    
+
     return string;
 }

@@ -12,7 +12,7 @@ State:
 Transition:
     event=ID ('/' action=ID)? '->' target=[State:QualifiedName];
 
-QualifiedName returns string: 
+QualifiedName returns string:
     ID ('.' ID)*;
 
 terminal ID: /[_a-zA-Z][\w_]*/;

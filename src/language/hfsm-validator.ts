@@ -87,15 +87,19 @@ export class HfsmValidator {
     private checkParentTransitions(machine: Machine, accept: ValidationAcceptor) {
         // Check each transition for unreachability.
         for (const transition of machine.transitions) {
-            const allChildrenHandleEvent = machine.states.every(state => 
-                state.machine && this.stateHandlesEvent(state.machine, transition.event)
+            const allChildrenHandleEvent = machine.states.every(
+                (state) => state.machine && this.stateHandlesEvent(state.machine, transition.event)
             );
 
             if (allChildrenHandleEvent && machine.states.length > 0) {
-                accept("warning", `Transition for event '${transition.event}' will never be reached because all child states handle this event.`, {
-                    node: transition,
-                    property: "event",
-                });
+                accept(
+                    "warning",
+                    `Transition for event '${transition.event}' will never be reached because all child states handle this event.`,
+                    {
+                        node: transition,
+                        property: "event",
+                    }
+                );
             }
         }
 
@@ -109,12 +113,14 @@ export class HfsmValidator {
 
     private stateHandlesEvent(machine: Machine, event: string): boolean {
         // Check if this machine directly handles the event.
-        if (machine.transitions.some(transition => transition.event === event)) {
+        if (machine.transitions.some((transition) => transition.event === event)) {
             return true;
         }
 
         // Check if all nested states handle the event (only if there are nested states).
-        return machine.states.length > 0 && 
-               machine.states.every(state => state.machine && this.stateHandlesEvent(state.machine, event));
+        return (
+            machine.states.length > 0 &&
+            machine.states.every((state) => state.machine && this.stateHandlesEvent(state.machine, event))
+        );
     }
 }

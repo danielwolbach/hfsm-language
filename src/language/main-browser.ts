@@ -1,7 +1,7 @@
-import { EmptyFileSystem } from 'langium';
-import { startLanguageServer } from 'langium/lsp';
-import { BrowserMessageReader, BrowserMessageWriter, createConnection } from 'vscode-languageserver/browser.js';
-import { createHfsmServices } from './hfsm-module.js';
+import { EmptyFileSystem } from "langium";
+import { startLanguageServer } from "langium/lsp";
+import { BrowserMessageReader, BrowserMessageWriter, createConnection } from "vscode-languageserver/browser.js";
+import { createHfsmServices } from "./hfsm-module.js";
 
 declare const self: DedicatedWorkerGlobalScope;
 

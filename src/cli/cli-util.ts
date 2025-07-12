@@ -1,8 +1,8 @@
-import type { AstNode, LangiumCoreServices, LangiumDocument } from 'langium';
-import chalk from 'chalk';
-import * as path from 'node:path';
-import * as fs from 'node:fs';
-import { URI } from 'langium';
+import type { AstNode, LangiumCoreServices, LangiumDocument } from "langium";
+import chalk from "chalk";
+import * as path from "node:path";
+import * as fs from "node:fs";
+import { URI } from "langium";
 
 export async function extractDocument(fileName: string, services: LangiumCoreServices): Promise<LangiumDocument> {
     const extensions = services.LanguageMetaData.fileExtensions;
@@ -16,28 +16,38 @@ export async function extractDocument(fileName: string, services: LangiumCoreSer
         process.exit(1);
     }
 
-    const document = await services.shared.workspace.LangiumDocuments.getOrCreateDocument(URI.file(path.resolve(fileName)));
+    const document = await services.shared.workspace.LangiumDocuments.getOrCreateDocument(
+        URI.file(path.resolve(fileName))
+    );
     await services.shared.workspace.DocumentBuilder.build([document], { validation: true });
 
-    const validationErrors = (document.diagnostics ?? []).filter(e => e.severity === 1);
-    const validationWarnings = (document.diagnostics ?? []).filter(e => e.severity === 2);
-    
+    const validationErrors = (document.diagnostics ?? []).filter((e) => e.severity === 1);
+    const validationWarnings = (document.diagnostics ?? []).filter((e) => e.severity === 2);
+
     if (validationErrors.length > 0) {
-        console.error(chalk.red('There are validation errors:'));
+        console.error(chalk.red("There are validation errors:"));
         for (const validationError of validationErrors) {
-            console.error(chalk.red(
-                `line ${validationError.range.start.line + 1}: ${validationError.message} [${document.textDocument.getText(validationError.range)}]`
-            ));
+            console.error(
+                chalk.red(
+                    `line ${validationError.range.start.line + 1}: ${
+                        validationError.message
+                    } [${document.textDocument.getText(validationError.range)}]`
+                )
+            );
         }
         process.exit(1);
     }
 
     if (validationWarnings.length > 0) {
-        console.warn(chalk.yellow('There are validation warnings:'));
+        console.warn(chalk.yellow("There are validation warnings:"));
         for (const validationWarning of validationWarnings) {
-            console.warn(chalk.yellow(
-                `line ${validationWarning.range.start.line + 1}: ${validationWarning.message} [${document.textDocument.getText(validationWarning.range)}]`
-            ));
+            console.warn(
+                chalk.yellow(
+                    `line ${validationWarning.range.start.line + 1}: ${
+                        validationWarning.message
+                    } [${document.textDocument.getText(validationWarning.range)}]`
+                )
+            );
         }
     }
 
@@ -49,14 +59,14 @@ export async function extractAstNode<T extends AstNode>(fileName: string, servic
 }
 
 interface FilePathData {
-    destination: string,
-    name: string
+    destination: string;
+    name: string;
 }
 
 export function extractDestinationAndName(filePath: string, destination: string | undefined): FilePathData {
-    filePath = path.basename(filePath, path.extname(filePath)).replace(/[.-]/g, '');
+    filePath = path.basename(filePath, path.extname(filePath)).replace(/[.-]/g, "");
     return {
-        destination: destination ?? path.join(path.dirname(filePath), 'generated'),
-        name: path.basename(filePath)
+        destination: destination ?? path.join(path.dirname(filePath), "generated"),
+        name: path.basename(filePath),
     };
 }

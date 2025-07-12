@@ -1,23 +1,30 @@
-import { type Module, inject } from 'langium';
-import { createDefaultModule, createDefaultSharedModule, type DefaultSharedModuleContext, type LangiumServices, type LangiumSharedServices, type PartialLangiumServices } from 'langium/lsp';
-import { HfsmGeneratedModule, HfsmGeneratedSharedModule } from './generated/module.js';
-import { HfsmValidator, registerValidationChecks } from './hfsm-validator.js';
-import { HfsmScopeComputation, HfsmScopeProvider } from './hfsm-scope.js';
+import { type Module, inject } from "langium";
+import {
+    createDefaultModule,
+    createDefaultSharedModule,
+    type DefaultSharedModuleContext,
+    type LangiumServices,
+    type LangiumSharedServices,
+    type PartialLangiumServices,
+} from "langium/lsp";
+import { HfsmGeneratedModule, HfsmGeneratedSharedModule } from "./generated/module.js";
+import { HfsmValidator, registerValidationChecks } from "./hfsm-validator.js";
+import { HfsmScopeComputation, HfsmScopeProvider } from "./hfsm-scope.js";
 
 /**
  * Declaration of custom services - add your own service classes here.
  */
 export type HfsmAddedServices = {
     validation: {
-        HfsmValidator: HfsmValidator
-    }
-}
+        HfsmValidator: HfsmValidator;
+    };
+};
 
 /**
  * Union of Langium default services and your custom services - use this as constructor parameter
  * of custom service classes.
  */
-export type HfsmServices = LangiumServices & HfsmAddedServices
+export type HfsmServices = LangiumServices & HfsmAddedServices;
 
 /**
  * Dependency injection module that overrides Langium default services and contributes the
@@ -26,12 +33,12 @@ export type HfsmServices = LangiumServices & HfsmAddedServices
  */
 export const HfsmModule: Module<HfsmServices, PartialLangiumServices & HfsmAddedServices> = {
     validation: {
-        HfsmValidator: () => new HfsmValidator()
+        HfsmValidator: () => new HfsmValidator(),
     },
     references: {
         ScopeComputation: (services) => new HfsmScopeComputation(services),
-        ScopeProvider: (services) => new HfsmScopeProvider(services)
-    }
+        ScopeProvider: (services) => new HfsmScopeProvider(services),
+    },
 };
 
 /**
@@ -50,18 +57,11 @@ export const HfsmModule: Module<HfsmServices, PartialLangiumServices & HfsmAdded
  * @returns An object wrapping the shared services and the language-specific services
  */
 export function createHfsmServices(context: DefaultSharedModuleContext): {
-    shared: LangiumSharedServices,
-    Hfsm: HfsmServices
+    shared: LangiumSharedServices;
+    Hfsm: HfsmServices;
 } {
-    const shared = inject(
-        createDefaultSharedModule(context),
-        HfsmGeneratedSharedModule
-    );
-    const Hfsm = inject(
-        createDefaultModule({ shared }),
-        HfsmGeneratedModule,
-        HfsmModule
-    );
+    const shared = inject(createDefaultSharedModule(context), HfsmGeneratedSharedModule);
+    const Hfsm = inject(createDefaultModule({ shared }), HfsmGeneratedModule, HfsmModule);
     shared.ServiceRegistry.register(Hfsm);
     registerValidationChecks(Hfsm);
     if (!context.connection) {
