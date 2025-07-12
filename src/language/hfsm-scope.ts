@@ -28,7 +28,7 @@ export class HfsmScopeComputation extends DefaultScopeComputation {
         for (const node of AstUtils.streamAllContents(document.parseResult.value)) {
             await interruptAndCheck(cancelToken);
 
-            if (isState(node)) {
+            if (isState(node) && node.name) {
                 const qualifiedName = getQualifiedName(node, node.name);
                 descriptors.push(this.descriptions.createDescription(node, qualifiedName, document));
             }
