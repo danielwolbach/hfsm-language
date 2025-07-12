@@ -1,19 +1,19 @@
 initial state Idle {
-    tooCold -> Heating
-    tooHot -> Cooling
+    tooCold / startSound -> Heating
+    tooHot / startSound -> Cooling
 }
 
 state Cooling {
-    atTemp -> Idle
+    atTemp / finishedSound -> Idle
     tooCold -> Heating
 }
 
 state Heating {
-    atTemp -> Idle
+    atTemp / finishedSound -> Idle
     tooHot -> Cooling
 
     initial state Activating {
-        ready -> Heating.Active
+        ready / heatingActiveSound -> Heating.Active
     }
 
     state Active {

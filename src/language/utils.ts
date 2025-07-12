@@ -31,7 +31,7 @@ export function findNextState(currentState: State, event: string): State | undef
     return undefined;
 }
 
-export function findAllTransitions(currentState: State): Transition[] {
+export function findAllTransitionsOutwards(currentState: State): Transition[] {
     let transitions: Transition[] = [];
     let searchingMachine: AstNode | undefined = currentState.machine || currentState.$container;
 
@@ -42,6 +42,22 @@ export function findAllTransitions(currentState: State): Transition[] {
         }
 
         searchingMachine = searchingMachine.$container?.$container;
+    }
+
+    return transitions;
+}
+
+export function findAllTransitionsInwards(machine: Machine): Transition[] {
+    if (machine.states.length === 0) {
+        return machine.transitions;
+    }
+
+    let transitions: Transition[] = [];
+
+    for (const state of machine.states) {
+        if (state.machine) {
+            transitions.push(...findAllTransitionsInwards(state.machine));
+        }
     }
 
     return transitions;

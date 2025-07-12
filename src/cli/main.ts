@@ -20,7 +20,7 @@ export const generateAction = async (fileName: string, opts: GenerateOptions): P
     const services = createHfsmServices(NodeFileSystem).Hfsm;
     const model = await extractAstNode<Model>(fileName, services);
     const generatedFilePath = generateJava(model, fileName, opts.destination);
-    console.log(chalk.green(`JavaScript code generated successfully: ${generatedFilePath}`));
+    console.log(chalk.green(`Java code generated successfully: ${generatedFilePath}`));
 };
 
 export type GenerateOptions = {

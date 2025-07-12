@@ -1,6 +1,6 @@
 import { Model, State } from "../language/generated/ast.js";
 import * as readline from "readline";
-import { findAllTransitions, findNextState, getQualifiedName, recurseInitialState } from "../language/utils.js";
+import { findAllTransitionsOutwards, findNextState, getQualifiedName, recurseInitialState } from "../language/utils.js";
 
 export function runInteraction(model: Model, query?: string): void {
     if (query) {
@@ -54,7 +54,7 @@ function interactiveMode(model: Model) {
             rl.close();
             return;
         } else if (trimmedInput === ":e") {
-            const transitions = findAllTransitions(currentState);
+            const transitions = findAllTransitionsOutwards(currentState);
             console.log("Available events:");
             for (const transition of transitions) {
                 console.log(`- ${transition.event}`);
