@@ -34,14 +34,6 @@ Locally serve a web editor by running the following command:
 npm run serve
 ```
 
-### Command Line Tooling
-
-Use the command line tooling by running the following command:
-
-```sh
-node bin/cli.js
-```
-
 ### Visual Studio Code Extension
 
 To try the Visual Studio Code extension, open the project directory, navigate to
@@ -54,4 +46,32 @@ command in the integrated terminal:
 
 ```sh
 node ../bin/cli.js
+```
+
+### Command Line Tooling
+
+Use the command line tooling by running the following command:
+
+```sh
+node bin/cli.js
+```
+
+#### Generate
+
+Use the command line tooling to generate extendable Java code of the state
+machine:
+
+```sh
+node bin/cli.js generate <file>
+```
+
+If you don't specify a directory, the code will output to the same directory as
+the state machine file.
+
+#### Interact
+
+Use the command line tooling to interactively test the state machine:
+
+```sh
+node bin/cli.js interact <file>
 ```
