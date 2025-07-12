@@ -12,7 +12,7 @@ export function recurseInitialState(machine: Machine): State {
     }
 }
 
-export function findNextState(currentState: State, event: string): State | undefined {
+export function findTransition(currentState: State, event: string): Transition | undefined {
     let searchingMachine: AstNode | undefined = currentState.machine || currentState.$container;
 
     // Traverse up the hierarchy to find the transition for the event.
@@ -20,7 +20,7 @@ export function findNextState(currentState: State, event: string): State | undef
         if (isMachine(searchingMachine)) {
             for (const transition of searchingMachine.transitions || []) {
                 if (transition.event === event) {
-                    return transition.target.ref;
+                    return transition;
                 }
             }
         }

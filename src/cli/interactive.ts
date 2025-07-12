@@ -1,6 +1,11 @@
 import { Model, State } from "../language/generated/ast.js";
 import * as readline from "readline";
-import { findAllTransitionsOutwards, findNextState, getQualifiedName, recurseInitialState } from "../language/utils.js";
+import {
+    findAllTransitionsOutwards,
+    findTransition,
+    getQualifiedName,
+    recurseInitialState,
+} from "../language/utils.js";
 
 export function runInteraction(model: Model, query?: string): void {
     if (query) {
@@ -16,13 +21,19 @@ function queryMode(model: Model, query: string) {
     let output: string[] = [getQualifiedName(currentState, currentState.name)];
 
     for (const event of events) {
-        output.push(`[${event}] ->`);
+        output.push(`[${event}]`);
 
-        let nextState = findNextState(currentState, event);
+        let transition = findTransition(currentState, event);
 
-        if (nextState) {
+        if (transition) {
+            let nextState = transition.target.ref!;
+
             if (nextState.machine && nextState.machine.states.length > 0) {
                 nextState = recurseInitialState(nextState.machine);
+            }
+
+            if (transition.action) {
+                output.push(`(${transition.action})`);
             }
 
             currentState = nextState;
@@ -31,6 +42,7 @@ function queryMode(model: Model, query: string) {
             return;
         }
 
+        output.push(`->`);
         output.push(getQualifiedName(currentState, currentState.name));
     }
 
@@ -43,6 +55,8 @@ function interactiveMode(model: Model) {
         output: process.stdout,
         prompt: "> ",
     });
+
+    console.log("Interactive mode. Type ':q' to quit, ':e' to list available events.");
 
     let currentState = recurseInitialState(model.machine!);
     printCurrentState(currentState);
@@ -60,9 +74,15 @@ function interactiveMode(model: Model) {
                 console.log(`- ${transition.event}`);
             }
         } else {
-            let nextState = findNextState(currentState, trimmedInput);
-            if (nextState) {
+            let transition = findTransition(currentState, trimmedInput);
+            if (transition) {
                 printEvent(input);
+
+                if (transition.action) {
+                    printAction(transition.action);
+                }
+
+                let nextState = transition.target.ref!;
                 // If the next state is a machine, we need to recurse to find the initial state.
                 if (nextState.machine && nextState.machine.states.length > 0) {
                     nextState = recurseInitialState(nextState.machine);
@@ -90,4 +110,8 @@ function printCurrentState(currentState: State): void {
 
 function printEvent(event: string): void {
     console.log(`Running event: ${event}`);
+}
+
+function printAction(action: string): void {
+    console.log(`Running action: ${action}`);
 }
