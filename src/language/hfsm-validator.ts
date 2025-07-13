@@ -1,6 +1,7 @@
 import type { ValidationAcceptor, ValidationChecks } from "langium";
-import type { HfsmAstType, Machine, Model } from "./generated/ast.js";
+import type { HfsmAstType, Machine, Model, State, Transition } from "./generated/ast.js";
 import type { HfsmServices } from "./hfsm-module.js";
+import { camelCase, pascalCase, snakeCase } from "change-case";
 
 /**
  * Register custom validation checks.
@@ -11,6 +12,8 @@ export function registerValidationChecks(services: HfsmServices) {
     const checks: ValidationChecks<HfsmAstType> = {
         Machine: [validator.checkInitialState, validator.checkUniqueStates, validator.checkUniqueEvents],
         Model: [validator.checkStateExists, validator.checkUnreachableTransitionsInModel],
+        State: [validator.checkStateName],
+        Transition: [validator.checkTransitionNames],
     };
     registry.register(checks, validator);
 }
@@ -84,6 +87,38 @@ export class HfsmValidator {
         }
     }
 
+    checkStateName(state: State, accept: ValidationAcceptor) {
+        const correctName = pascalCase(state.name);
+        if (state.name !== correctName) {
+            accept("warning", "State names should be in PascalCase.", {
+                node: state,
+                property: "name",
+            });
+        }
+    }
+
+    checkTransitionNames(transition: Transition, accept: ValidationAcceptor) {
+        const correctEventName = camelCase(transition.event);
+
+        if (transition.event !== correctEventName) {
+            accept("warning", "Event names should be in camelCase.", {
+                node: transition,
+                property: "event",
+            });
+        }
+
+        if (transition.action) {
+            const correctActionName = camelCase(transition.action);
+
+            if (transition.action !== correctActionName) {
+                accept("warning", "Action names should be in camelCase.", {
+                    node: transition,
+                    property: "action",
+                });
+            }
+        }
+    }
+
     private checkParentTransitions(machine: Machine, accept: ValidationAcceptor) {
         // Check each transition for unreachability.
         for (const transition of machine.transitions) {
@@ -113,7 +148,7 @@ export class HfsmValidator {
 
     private stateHandlesEvent(machine: Machine, event: string): boolean {
         // Check if this machine directly handles the event.
-        if (machine.transitions.some((transition) => transition.event === event)) {
+        if (machine.transitions.some((transition) => snakeCase(transition.event) === snakeCase(event))) {
             return true;
         }
 
