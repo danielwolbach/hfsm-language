@@ -6,14 +6,15 @@ Language for modeling hierarchical finite state machines, implemented using
 
 ## Features
 
-- Web-based editor with syntax highlighting and LSP integration
-- Extension for Visual Studio Code with syntax highlighting and LSP integration
-- Command line tooling for simulation and code generation
+-   Web-based editor with syntax highlighting and LSP integration
+-   Extension for Visual Studio Code with syntax highlighting and LSP integration
+-   Command line tooling for simulation and code generation
 
 ## Instructions
 
-Make sure to [have Node.js installed](https://nodejs.org/en/download). Use the
-following commands to set up the project:
+Make sure to [have Node.js installed](https://nodejs.org/en/download). Download
+or clone the repository and use the following commands in the project directory
+to set everything up:
 
 ```sh
 # Install dependencies.
