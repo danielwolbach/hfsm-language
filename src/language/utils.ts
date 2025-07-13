@@ -73,3 +73,33 @@ export function getQualifiedName(node: AstNode, name: string): string {
 
     return name;
 }
+
+export function findAllStates(machine: Machine): State[] {
+    let states: State[] = [];
+
+    for (const state of machine.states || []) {
+        states.push(state);
+
+        if (state.machine) {
+            states.push(...findAllStates(state.machine));
+        }
+    }
+
+    return states;
+}
+
+export function findLeafStates(machine: Machine): State[] {
+    const leafStates: State[] = [];
+
+    if (machine.states) {
+        for (const subState of machine.states) {
+            if (subState.machine && subState.machine.states && subState.machine.states.length > 0) {
+                leafStates.push(...findLeafStates(subState.machine));
+            } else {
+                leafStates.push(subState);
+            }
+        }
+    }
+
+    return leafStates;
+}

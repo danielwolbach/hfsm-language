@@ -1,11 +1,12 @@
 import fs from "fs";
 import path from "path";
-import type { Machine, Model, State } from "../language/generated/ast.js";
+import { isState, type Model, type State } from "../language/generated/ast.js";
 import {
     findAllTransitionsInwards,
     findAllTransitionsOutwards,
     getQualifiedName,
     recurseInitialState,
+    findAllStates,
 } from "../language/utils.js";
 import { pascalCase, camelCase, snakeCase } from "change-case";
 
@@ -40,15 +41,16 @@ function getDestinationPath(filePath: string, destinationDir: string | undefined
 // Main Code Generation
 
 function generateStateMachine(className: string, model: Model): string {
-    const leafStates = findLeafStates(model.machine!);
+    const allStates = findAllStates(model.machine!);
     const initialState = recurseInitialState(model.machine!);
 
     const abstractState = generateAbstractState(className);
-    const stateClasses = generateStateClasses(leafStates, className);
+    const stateClasses = generateStateClasses(allStates, className);
     const actionFunctions = generateActionFunctions(model);
     const eventEnum = generateEventEnum(model);
-    const stateDeclarations = generateStateDeclarations(leafStates);
-    const transitionSetup = generateTransitionSetup(leafStates);
+    const stateDeclarations = generateStateDeclarations(allStates);
+    const transitionSetup = generateTransitionSetup(allStates);
+    const parentsSetup = generateParentsSetup(allStates);
 
     return `
 public class ${className} {
@@ -64,6 +66,7 @@ ${eventEnum}
 
     private final java.util.Map<State, java.util.Map<Event, State>> transitions = new java.util.HashMap<>();
     private final java.util.Map<State, java.util.Map<Event, Runnable>> actions = new java.util.HashMap<>();
+    private final java.util.Map<State, State> parents = new java.util.HashMap<>();
     
 ${stateDeclarations.join("\n")}
     
@@ -71,15 +74,21 @@ ${stateDeclarations.join("\n")}
 
     public ${className}() {
 ${transitionSetup.join("\n")}
+${parentsSetup.join("\n")}
 
         this.currentState = this.${getInstanceName(initialState)};
         this.currentState.enter();
     }
 
+    public State current() {
+        return currentState;
+    }
+
     public void event(Event event) {
         State nextState = transitions.get(currentState).get(event);
         if (nextState != null) {
-            currentState.exit();
+            State commonAncestor = findCommonAncestor(currentState, nextState);
+            exitToAncestor(currentState, commonAncestor);
 
             Runnable action = actions.get(currentState).get(event);
             if (action != null) {
@@ -87,12 +96,46 @@ ${transitionSetup.join("\n")}
             }
 
             currentState = nextState;
-            currentState.enter();
+            enterFromAncestor(commonAncestor, currentState);
         }
     }
-    
-    public State current() {
-        return currentState;
+
+    private State findCommonAncestor(State state1, State state2) {
+        java.util.Set<State> ancestors1 = new java.util.HashSet<>();
+        State current = state1;
+        while (current != null) {
+            ancestors1.add(current);
+            current = parents.get(current);
+        }
+
+        current = state2;
+        while (current != null) {
+            if (ancestors1.contains(current)) {
+                return current;
+            }
+            current = parents.get(current);
+        }
+        return null;
+    }
+
+    private void exitToAncestor(State state, State ancestor) {
+        State current = state;
+        while (current != null && current != ancestor) {
+            current.exit();
+            current = parents.get(current);
+        }
+    }
+
+    private void enterFromAncestor(State ancestor, State target) {
+        if (target != null && target != ancestor) {
+            State parent = parents.get(target);
+            if (parent != null && parent != ancestor) {
+                enterFromAncestor(ancestor, parent);
+            }
+        }
+        if (target != null) {
+            target.enter();
+        }
     }
 }`;
 }
@@ -117,8 +160,13 @@ function generateAbstractState(className: string): string {
 function generateState(state: State, className: string): string {
     const stateName = getStateName(state);
 
+    let superState = "State";
+    if (isState(state.$container.$container)) {
+        superState = getStateName(state.$container.$container);
+    }
+
     return `
-    private class ${stateName} extends State {
+    private class ${stateName} extends ${superState} {
         ${stateName}(${className} stateMachine) {
             super(stateMachine);
         }
@@ -145,11 +193,16 @@ function generateStateClasses(leafStates: State[], className: string): string[] 
     return classes;
 }
 
-function generateStateDeclarations(leafStates: State[]): string[] {
-    return leafStates.map(
-        (state) =>
-            `    private final ${getStateName(state)} ${getInstanceName(state)} = new ${getStateName(state)}(this);`
-    );
+function generateStateDeclarations(allStates: State[]): string[] {
+    const declarations: string[] = [];
+
+    for (const state of allStates) {
+        const stateName = getStateName(state);
+        const instanceName = getInstanceName(state);
+        declarations.push(`    private final ${stateName} ${instanceName} = new ${stateName}(this);`);
+    }
+
+    return declarations;
 }
 
 // Event and Action Generation
@@ -193,18 +246,35 @@ function generateActionFunctions(model: Model): string[] {
 
 // Transition Setup Generation
 
-function generateTransitionSetup(leafStates: State[]): string[] {
+function generateTransitionSetup(states: State[]): string[] {
     const lines: string[] = [];
 
-    for (const state of leafStates) {
-        const instanceName = getInstanceName(state);
-        lines.push(`        transitions.put(${instanceName}, new java.util.HashMap<>());`);
-        lines.push(`        actions.put(${instanceName}, new java.util.HashMap<>());`);
+    for (const state of states) {
+        // Only generate transitions for leaf states (states without children)
+        if (!state.machine || !state.machine.states || state.machine.states.length === 0) {
+            const instanceName = getInstanceName(state);
+            lines.push(`        transitions.put(${instanceName}, new java.util.HashMap<>());`);
+            lines.push(`        actions.put(${instanceName}, new java.util.HashMap<>());`);
 
-        const transitions = findAllTransitionsOutwards(state);
-        for (const transition of transitions) {
-            addTransitionMapping(lines, instanceName, transition);
-            addActionMapping(lines, instanceName, transition);
+            const transitions = findAllTransitionsOutwards(state);
+            for (const transition of transitions) {
+                addTransitionMapping(lines, instanceName, transition);
+                addActionMapping(lines, instanceName, transition);
+            }
+        }
+    }
+
+    return lines;
+}
+
+function generateParentsSetup(states: State[]): string[] {
+    const lines: string[] = [];
+
+    for (const state of states) {
+        if (isState(state.$container.$container)) {
+            const stateName = getInstanceName(state);
+            const parentName = getInstanceName(state.$container.$container);
+            lines.push(`        parents.put(${stateName}, ${parentName});`);
         }
     }
 
@@ -233,22 +303,6 @@ function addActionMapping(lines: string[], instanceName: string, transition: any
 }
 
 // Utility Functions
-
-function findLeafStates(machine: Machine): State[] {
-    const leafStates: State[] = [];
-
-    if (machine.states) {
-        for (const subState of machine.states) {
-            if (subState.machine && subState.machine.states && subState.machine.states.length > 0) {
-                leafStates.push(...findLeafStates(subState.machine));
-            } else {
-                leafStates.push(subState);
-            }
-        }
-    }
-
-    return leafStates;
-}
 
 function getStateName(state: State): string {
     const qualifiedName = getQualifiedName(state, state.name).replace(/\./g, "");
