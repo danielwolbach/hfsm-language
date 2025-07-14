@@ -77,7 +77,7 @@ ${transitionSetup.join("\n")}
 ${parentsSetup.join("\n")}
 
         this.currentState = this.${getInstanceName(initialState)};
-        this.currentState.enter();
+        enterFromAncestor(null, this.currentState);
     }
 
     public State current() {
