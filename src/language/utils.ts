@@ -60,6 +60,10 @@ export function findAllTransitionsInwards(machine: Machine): Transition[] {
         }
     }
 
+    for (const transition of machine.transitions) {
+        transitions.push(transition);
+    }
+
     return transitions;
 }
 
