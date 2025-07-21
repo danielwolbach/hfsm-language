@@ -319,5 +319,5 @@ function getEventName(event: string): string {
 }
 
 function getActionName(action: string): string {
-    return camelCase(action);
+    return `${camelCase(action)}Action`;
 }
